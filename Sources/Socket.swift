@@ -80,7 +80,7 @@ public class Socket: Hashable, Equatable {
         return Socket(socketFileDescriptor: socketFileDescriptor)
     }
     
-    private let socketFileDescriptor: Int32
+    public let socketFileDescriptor: Int32
     
     public init(socketFileDescriptor: Int32) {
         self.socketFileDescriptor = socketFileDescriptor
@@ -127,7 +127,23 @@ public class Socket: Hashable, Equatable {
             }
         }
     }
-    
+
+    // TODO: refactor to use common code with writeUInt8 func
+    public func writeData(data : NSData) throws {
+        var sent = 0
+        while sent < data.length {
+            #if os(Linux)
+                let s = send(self.socketFileDescriptor, data.bytes + sent, Int(data.length - sent), Int32(MSG_NOSIGNAL))
+            #else
+                let s = write(self.socketFileDescriptor, data.bytes + sent, Int(data.length - sent))
+            #endif
+            if s <= 0 {
+                throw SocketError.WriteFailed(Socket.descriptionOfLastError())
+            }
+            sent += s
+        }
+    }
+
     public func read() throws -> UInt8 {
         var buffer = [UInt8](count: 1, repeatedValue: 0)
         let next = recv(self.socketFileDescriptor as Int32, &buffer, Int(buffer.count), 0)

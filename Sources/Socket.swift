@@ -80,7 +80,7 @@ public class Socket: Hashable, Equatable {
         return Socket(socketFileDescriptor: socketFileDescriptor)
     }
     
-    public let socketFileDescriptor: Int32
+    public private(set) var socketFileDescriptor: Int32
     
     public init(socketFileDescriptor: Int32) {
         self.socketFileDescriptor = socketFileDescriptor
@@ -88,8 +88,11 @@ public class Socket: Hashable, Equatable {
     
     public var hashValue: Int { return Int(self.socketFileDescriptor) }
     
+    public var isValid : Bool { return self.socketFileDescriptor != -1; }
+    
     public func release() {
         Socket.release(self.socketFileDescriptor)
+        self.socketFileDescriptor = -1
     }
     
     public func shutdwn() {
@@ -97,7 +100,11 @@ public class Socket: Hashable, Equatable {
     }
     
     public func acceptClientSocket() throws -> Socket {
-        var addr = sockaddr()        
+        guard self.isValid else {
+            throw SocketError.AcceptFailed("Invalid socketFileDescriptor")
+        }
+        
+        var addr = sockaddr()
         var len: socklen_t = 0
         let clientSocket = accept(self.socketFileDescriptor, &addr, &len)
         if clientSocket == -1 {
@@ -112,6 +119,10 @@ public class Socket: Hashable, Equatable {
     }
     
     public func writeUInt8(data: [UInt8]) throws {
+        guard self.isValid else {
+            throw SocketError.WriteFailed("Invalid socketFileDescriptor")
+        }
+        
         try data.withUnsafeBufferPointer {
             var sent = 0
             while sent < data.count {
@@ -129,6 +140,10 @@ public class Socket: Hashable, Equatable {
     }
 
     public func read() throws -> UInt8 {
+        guard self.isValid else {
+            throw SocketError.RecvFailed("Invalid socketFileDescriptor")
+        }
+        
         var buffer = [UInt8](count: 1, repeatedValue: 0)
         let next = recv(self.socketFileDescriptor as Int32, &buffer, Int(buffer.count), 0)
         if next <= 0 {
@@ -151,6 +166,10 @@ public class Socket: Hashable, Equatable {
     }
     
     public func peername() throws -> String {
+        guard self.isValid else {
+            throw SocketError.GetPeerNameFailed("Invalid socketFileDescriptor")
+        }
+        
         var addr = sockaddr(), len: socklen_t = socklen_t(sizeof(sockaddr))
         if getpeername(self.socketFileDescriptor, &addr, &len) != 0 {
             throw SocketError.GetPeerNameFailed(Socket.descriptionOfLastError())

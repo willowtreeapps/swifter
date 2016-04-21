@@ -28,7 +28,7 @@ public class HttpParser {
         let request = HttpRequest()
         request.method = statusLineTokens[0]
         request.path = statusLineTokens[1]
-        request.queryParams = extractQueryParams(request.path)
+        request.queryParams = HttpParser.extractQueryParams(request.path)
         request.headers = try readHeaders(socket)
         if let contentLength = request.headers["content-length"], let contentLengthValue = Int(contentLength) {
             request.body = try readBody(socket, size: contentLengthValue)
@@ -36,7 +36,7 @@ public class HttpParser {
         return request
     }
     
-    private func extractQueryParams(url: String) -> [(String, String)] {
+    public static func extractQueryParams(url: String) -> [(String, String)] {
         guard let query = url.split("?").last else {
             return []
         }

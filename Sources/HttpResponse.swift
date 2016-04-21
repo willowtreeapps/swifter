@@ -103,7 +103,7 @@ public enum HttpResponse {
         }
     }
     
-    func headers() -> [String: String] {
+    public func headers() -> [String: String] {
         var headers = ["Server" : "Swifter \(HttpServer.VERSION)"]
         switch self {
         case .SwitchProtocols(let switchHeaders, _):
@@ -129,7 +129,7 @@ public enum HttpResponse {
         return headers
     }
     
-    func content() -> (length: Int, write: (HttpResponseBodyWriter throws -> Void)?) {
+    public func content() -> (length: Int, write: (HttpResponseBodyWriter throws -> Void)?) {
         switch self {
         case .OK(let body)             : return body.content()
         case .BadRequest(let body)     : return body?.content() ?? (-1, nil)
@@ -157,7 +157,7 @@ public enum HttpResponse {
     }
 */
 
-func ==(inLeft: HttpResponse, inRight: HttpResponse) -> Bool {
+public func ==(inLeft: HttpResponse, inRight: HttpResponse) -> Bool {
     return inLeft.statusCode() == inRight.statusCode()
 }
 

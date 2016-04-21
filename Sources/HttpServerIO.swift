@@ -14,7 +14,7 @@ import Foundation
 
 public class HttpServerIO {
     
-    private var listenSocket: Socket = Socket(socketFileDescriptor: -1)
+    public var listenSocket: Socket = Socket(socketFileDescriptor: -1)
     private var clientSockets: Set<Socket> = []
     private let clientSocketsLock = NSLock()
     
